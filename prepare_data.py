@@ -1,24 +1,33 @@
 import os
 import json
+import soundfile as sf
 from datasets import load_dataset
 from tqdm import tqdm
 
-# Define output directory
 DATA_DIR = os.environ.get("DATA_DIR", "./data")
 target_data_dir = os.path.join(DATA_DIR, "medical_asr_converted")
 os.makedirs(target_data_dir, exist_ok=True)
 
-def convert_to_manifest(dataset_split, manifest_path):
-    """Convert dataset split to NeMo-compatible manifest."""
+wavs_dir = os.path.join(target_data_dir, "wavs")
+os.makedirs(wavs_dir, exist_ok=True)
+
+def convert_to_manifest(dataset_split, manifest_path, split_name):
+    """Convert dataset split to NeMo-compatible manifest with local .wav files."""
     with open(manifest_path, 'w') as fout:
-        for sample in tqdm(dataset_split, desc=f"Creating manifest at {manifest_path}"):
-            audio_path = sample["audio"]["path"]
+        for i, sample in enumerate(tqdm(dataset_split, desc=f"Creating manifest at {manifest_path}")):
+            audio_array = sample["audio"]["array"]
+            sampling_rate = sample["audio"]["sampling_rate"]
             transcript = sample["transcription"]
-            duration = len(sample["audio"]["array"]) / sample["audio"]["sampling_rate"]
+
+            # Save audio to local .wav file
+            local_wav_path = os.path.join(wavs_dir, f"{split_name}_{i}.wav")
+            sf.write(local_wav_path, audio_array, sampling_rate)
+
+            duration = len(audio_array) / sampling_rate
 
             metadata = {
-                "audio_filepath": audio_path,
-                "duration": duration,
+                "audio_filepath": local_wav_path,
+                "duration": round(duration, 3),
                 "text": transcript
             }
 
@@ -28,9 +37,9 @@ def convert_to_manifest(dataset_split, manifest_path):
 # Load dataset
 dataset = load_dataset("jarvisx17/Medical-ASR-EN")
 
-# Split dataset into train (80%), validation (10%), test (10%)
+# Split
 split_dataset = dataset["train"].train_test_split(test_size=0.2, seed=42)
-train_val_split = split_dataset["train"].train_test_split(test_size=0.1111, seed=42)  # 10% of 90% ≈ 10%
+train_val_split = split_dataset["train"].train_test_split(test_size=0.1111, seed=42)
 
 train_dataset = train_val_split["train"]
 val_dataset = train_val_split["test"]
@@ -41,9 +50,9 @@ train_manifest_path = os.path.join(target_data_dir, "train_manifest.json")
 val_manifest_path = os.path.join(target_data_dir, "val_manifest.json")
 test_manifest_path = os.path.join(target_data_dir, "test_manifest.json")
 
-# Create manifests
-convert_to_manifest(train_dataset, train_manifest_path)
-convert_to_manifest(val_dataset, val_manifest_path)
-convert_to_manifest(test_dataset, test_manifest_path)
+# Create manifests with local .wav saving
+convert_to_manifest(train_dataset, train_manifest_path, "train")
+convert_to_manifest(val_dataset, val_manifest_path, "val")
+convert_to_manifest(test_dataset, test_manifest_path, "test")
 
-print(f"✅ All manifests generated in: {target_data_dir}")
+print(f"✅ Audio and manifests saved in: {target_data_dir}")
