@@ -21,7 +21,7 @@ model:
     joint_hidden: 640
 
   train_ds:
-    manifest_filepath: ???
+    manifest_filepath: ./data/medical_asr_converted/train_manifest.json
     sample_rate: ${model.sample_rate}
     batch_size: 16 # you may increase batch_size if your memory allows
     shuffle: true
@@ -38,7 +38,7 @@ model:
     bucketing_batch_size: null
 
   validation_ds:
-    manifest_filepath: ???
+    manifest_filepath: ./data/medical_asr_converted/val_manifest.json
     sample_rate: ${model.sample_rate}
     batch_size: 16
     shuffle: false
@@ -47,7 +47,7 @@ model:
     pin_memory: true
 
   test_ds:
-    manifest_filepath: null
+    manifest_filepath: ./data/medical_asr_converted/test_manifest.json
     sample_rate: ${model.sample_rate}
     batch_size: 16
     shuffle: false
