@@ -3,7 +3,7 @@ import nemo.collections.asr as nemo_asr
 import pytorch_lightning as pl
 
 # 1. Load YAML config file (from NeMo example or custom)
-cfg = OmegaConf.load("conf/parakeet_finetune.yaml")
+cfg = OmegaConf.load("conf/parakeet_tdt_finetune.yaml")
 
 # 2. Customize config paths and training settings
 cfg.init_from_nemo_model = "./parakeet_tdt_0.6b_v2.nemo"
